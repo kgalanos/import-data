@@ -5,7 +5,9 @@ namespace Kgalanos\ImportData;
 class ImportDataClass
 {
     protected $streamErrors;
+
     protected int $problemRec = 0;
+
     public function __construct(
         /**
          * @var Model $model
@@ -13,9 +15,9 @@ class ImportDataClass
         protected string $model,
         public array $data,
         string $folderToSaveErrors = null,
-    ){
-        $tableName = str_replace('\\','_',$model,);
-        $this->streamErrors = fopen($folderToSaveErrors.$tableName."err.txt",'w');
+    ) {
+        $tableName = str_replace('\\', '_', $model);
+        $this->streamErrors = fopen($folderToSaveErrors.$tableName.'err.txt', 'w');
     }
 
     public function __destruct()
@@ -27,8 +29,7 @@ class ImportDataClass
         string $model,
         array $data,
         string $folderToSaveErrors = null,
-    ):self
-    {
+    ): self {
         return new self($model, $data, $folderToSaveErrors);
     }
 
@@ -36,35 +37,37 @@ class ImportDataClass
     {
         $this->data = $data;
     }
-    public function getProblemRec():int
+
+    public function getProblemRec(): int
     {
         return $this->problemRec;
     }
+
     public function insert()
     {
         $this->problemRec = 0;
-        try{
+        try {
             $this->model::insert($this->data);
-        }catch(\Exception $exception){
+        } catch (\Exception $exception) {
             /*
              * if there is any error examine one by one rec
              */
-            foreach($this->data as $rec){
+            foreach ($this->data as $rec) {
                 $this->create($rec);
             }
         }
+
         return true;
     }
 
     private function create($rec)
     {
-        try{
+        try {
             $this->model::create($rec);
-        }catch(\Exception $exception){
+        } catch (\Exception $exception) {
             $this->problemRec++;
             fwrite($this->streamErrors, $exception->getMessage());
             fwrite($this->streamErrors, "$this->problemRec -- ".print_r($rec, true));
         }
     }
-
 }
